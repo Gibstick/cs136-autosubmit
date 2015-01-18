@@ -25,10 +25,10 @@ m = Marmoset(username, password)
 class MarmosetAssignment:
     """Stores one marmoset assignment problem and a list of its files"""
 
-    def __init__(self, course='', assignment='', files=[]):
+    def __init__(self, course='', assignment=''):
         self.course = course
         self.assignment = assignment
-        self.files = files
+        self.files = []
 
 
     def setCourse(self, course):
@@ -41,6 +41,10 @@ class MarmosetAssignment:
         self.files.append(f)
 
     def submit(self, m):
+        if len(self.files) == 1:
+            print("Submitting " + self.course + " " + self.assignment)
+            self.files = self.files[0] # Fix for zipping the entire directory structure
+
         m.submit(self.course, self.assignment, self.files)
 
 
@@ -81,17 +85,14 @@ def getFilePaths(filetype):
     cwd = os.getcwd()
     return glob.glob(cwd + '/*' + filetype)
 
-def getAllParams(files):
+def getAllParams(fileList):
     """
     Get all parameters from the list of files.
 
     param files: A list of files
     returns: a list of MarmosetAssignments
     """
-    marmoProblems = dict()
-    fileList = []
-    for filetype in langLookup:
-        fileList += getFilePaths(filetype)
+    marmoProblems = {}
 
     paramsMap = zip(fileList, map(lambda f: getParamsFromFile(f), fileList))
 
@@ -99,8 +100,8 @@ def getAllParams(files):
     for entry in validFiles:
         course = entry[1][0]
         assignment = entry[1][1]
-        fileName = entry[0] # FIXME: Breaks when there are spaces in path
-        id = course + assignment # 'course' + 'assgignment'
+        fileName = entry[0] # FIXME: Zip behaviour is weird
+        id = (course, assignment) # 'course' + 'assignment'
         if id in marmoProblems:
             # add filename to existing MarmosetAssignment
             marmoProblems[id].addFile(fileName)
@@ -114,4 +115,8 @@ def submitAll(marmosetAssignments, m):
     for problem in marmosetAssignments:
         problem.submit(m)
 
-submitAll(getAllParams(2), m)
+files = []
+for filetype in langLookup:
+    files += getFilePaths(filetype)
+
+submitAll(getAllParams(files), m)
