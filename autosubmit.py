@@ -90,9 +90,9 @@ class MarmosetAssignment:
         :return: None
         """
         if len(self.files) == 1:
-            print("Submitting " + self.course + " " + self.assignment)
             self.files = self.files[0]  # Fix for zipping the entire directory structure
 
+        print("Submitting " + self.course + " " + self.assignment)
         marmoset.submit(self.course, self.assignment, self.files)
 
 
@@ -158,7 +158,7 @@ def get_all_params(file_list):
     for entry in valid_files:
         course = entry[1][0]
         assignment = entry[1][1]
-        filename = entry[0]  # FIXME: Zip behaviour is weird
+        filename = os.path.basename(entry[0])  # FIXME: Zip behaviour is weird
         key = (course, assignment)  # 'course' + 'assignment'
         if key in marmo_problems:
             # add filename to existing MarmosetAssignment
