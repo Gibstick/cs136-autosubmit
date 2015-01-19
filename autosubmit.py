@@ -93,7 +93,11 @@ class MarmosetAssignment:
             self.files = self.files[0]  # Fix for zipping the entire directory structure
 
         print("Submitting " + self.course + " " + self.assignment)
-        marmoset.submit(self.course, self.assignment, self.files)
+        result = marmoset.submit(self.course, self.assignment, self.files)
+        if result:
+            print("Sucess!")
+        else:
+            print("Submission failed (check login credentials")
 
 
 def get_params_from_file(path):
