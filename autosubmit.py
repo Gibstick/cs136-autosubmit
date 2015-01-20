@@ -5,6 +5,8 @@ from getpass import getpass
 import os
 import glob
 import sys
+import threading
+import fileinput
 
 # monkey-patch SSL because verification fails on 2.7.9
 if sys.hexversion == 34015728:
@@ -21,8 +23,6 @@ langLookup = {'.rkt': RACKET_KEYWORD, '.c': C_KEYWORD}
 
 username = raw_input('Username: ')
 password = getpass('Password: ')
-
-m = Marmoset(username, password)
 
 
 class MarmosetAssignment:
@@ -80,7 +80,7 @@ class MarmosetAssignment:
         """
         self.files.append(f)
 
-    def submit(self, marmoset):
+    def submit(self, username, password):
         """
         Submit all files in the instance's files field.
 
@@ -89,15 +89,32 @@ class MarmosetAssignment:
 
         :return: None
         """
+        marmoset = Marmoset(username, password)
+
         if len(self.files) == 1:
             self.files = self.files[0]  # Fix for zipping the entire directory structure
 
-        print("Submitting " + self.course + " " + self.assignment)
+        print("Submitting " + self.course + " " + self.assignment + '\n')
         result = marmoset.submit(self.course, self.assignment, self.files)
         if result:
-            print("Sucess!")
+            print("Sucess!\n")
         else:
-            print("Submission failed (check login credentials")
+            print("Submission failed (check login credentials)\n")
+
+    def async_submit(self, username, password):
+        """
+        Submit all files in the instance's files field without blocking.
+
+        :param marmoset: Marmoset instance
+        :type marmoset: Marmoset
+
+        :return: None
+        """
+        threads = []
+        for i in range(len(self.files)):
+            t = threading.Thread(target=self.submit, args=(username,password,))
+            threads.append(t)
+            t.start()
 
 
 def get_params_from_file(path):
@@ -110,11 +127,14 @@ def get_params_from_file(path):
     :return: A list of parameters [course, assignment]
     :rtype: list
     """
-    f = open(path)
+    f = fileinput.input(path)
     file_extension = os.path.splitext(path)[1]
     keyword = langLookup[file_extension]
 
     for line in f:
+        if f.lineno() >= 10:  # limit of 10 lines
+            break
+
         if line.startswith(keyword):
             params = line.split(' ', 2)
             if len(params) != 3:
@@ -174,13 +194,13 @@ def get_all_params(file_list):
     return marmo_problems.values()
 
 
-def submit_all(assignments, marmoset):
+def submit_all(assignments, username, password):
     for problem in assignments:
-        problem.submit(marmoset)
+        problem.async_submit(username, password)
 
 
 files = []
 for file_exts in langLookup:
     files += get_file_paths(file_exts)
 
-submit_all(get_all_params(files), m)
+submit_all(get_all_params(files), username, password)
