@@ -84,8 +84,10 @@ class MarmosetAssignment:
         """
         Submit all files in the instance's files field.
 
-        :param marmoset: Marmoset instance
-        :type marmoset: Marmoset
+        :param username: CAS username
+        :type username: str
+        :param password: CAS password
+        :type password: str
 
         :return: None
         """
@@ -105,14 +107,16 @@ class MarmosetAssignment:
         """
         Submit all files in the instance's files field without blocking.
 
-        :param marmoset: Marmoset instance
-        :type marmoset: Marmoset
+        :param username: CAS username
+        :type username: str
+        :param password: CAS password
+        :type password: str
 
         :return: None
         """
         threads = []
         for i in range(len(self.files)):
-            t = threading.Thread(target=self.submit, args=(username,password,))
+            t = threading.Thread(target=self.submit, args=(username, password, ))
             threads.append(t)
             t.start()
 
