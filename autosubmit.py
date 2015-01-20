@@ -97,7 +97,7 @@ class MarmosetAssignment:
         print("Submitting " + self.course + " " + self.assignment + '\n')
         result = marmoset.submit(self.course, self.assignment, self.files)
         if result:
-            print("Sucess!\n")
+            print("Success!\n")
         else:
             print("Submission failed (check login credentials)\n")
 
