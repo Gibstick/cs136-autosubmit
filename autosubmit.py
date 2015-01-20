@@ -114,10 +114,9 @@ class MarmosetAssignment:
 
         :return: None
         """
-        threads = []
+
         for i in range(len(self.files)):
             t = threading.Thread(target=self.submit, args=(username, password, ))
-            threads.append(t)
             t.start()
 
 
