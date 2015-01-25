@@ -17,9 +17,9 @@ if sys.hexversion == 34015728:
         ssl._create_default_https_context = ssl._create_unverified_context
 
 RACKET_KEYWORD = ';;;!'
-C_KEYWORD = '///'
+C_KEYWORD = '///!'
 LINE_SEARCH_LIMIT = 10
-langLookup = {'.rkt': RACKET_KEYWORD, '.c': C_KEYWORD}
+langLookup = {'.rkt': RACKET_KEYWORD, '.c': C_KEYWORD, '.h': C_KEYWORD}
 
 username = raw_input('Username: ')
 password = getpass('Password: ')
