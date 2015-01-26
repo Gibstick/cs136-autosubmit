@@ -11,15 +11,16 @@ Submit all .rkt files in the current directory that contain this line:
 
 For example, `;;;(autosubmit cs136 a1p0e)`
 
-And all .c files that have
+And all .c/.h files that have
 
-`///autosubmit class assignment`
+`///!autosubmit class assignment`
 
 Todo
 ----
 - ~~submit multiple files for one assignment~~
 - ~~support for .c files~~
 - support for arbitrary file types with an "autosubmit-rules" file
+- remember username/password
 
 License
 -------
