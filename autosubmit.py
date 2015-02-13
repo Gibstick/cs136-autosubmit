@@ -162,7 +162,7 @@ def get_file_paths(file_extension):
     :type file_extension: str
 
     :return: A list of file paths
-    :rtype: str
+    :rtype: list
     """
     cwd = os.getcwd()
     return glob.glob(cwd + '/*' + file_extension)
