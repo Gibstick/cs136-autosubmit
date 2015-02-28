@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 from marmoset import Marmoset
 from getpass import getpass
 import os
@@ -7,6 +7,9 @@ import glob
 import sys
 import threading
 import fileinput
+import ntpath
+# Hack to make print "thread safe"
+print = lambda x: sys.stdout.write("%s\n" % x)
 
 # monkey-patch SSL because verification fails on 2.7.9
 if sys.hexversion == 34015728:
@@ -16,13 +19,15 @@ if sys.hexversion == 34015728:
         # noinspection PyProtectedMember
         ssl._create_default_https_context = ssl._create_unverified_context
 
+
 RACKET_KEYWORD = ';;;!'
 C_KEYWORD = '///!'
 LINE_SEARCH_LIMIT = 10
 langLookup = {'.rkt': RACKET_KEYWORD, '.c': C_KEYWORD, '.h': C_KEYWORD}
+MAX_DEPTH = 2
 
-username = raw_input('Username: ')
-password = getpass('Password: ')
+m_username = raw_input('Username: ')
+m_password = getpass('Password: ')
 
 
 class MarmosetAssignment:
@@ -92,16 +97,17 @@ class MarmosetAssignment:
         :return: None
         """
         marmoset = Marmoset(username, password)
+        #Marmoset.login(marmoset, username, password) # Temporary fix for marmoste 1.1.3 regression
 
         if len(self.files) == 1:
             self.files = self.files[0]  # Fix for zipping the entire directory structure
 
-        print("Submitting " + self.course + " " + self.assignment + '\n')
+        print("Submitting {} {} ".format(self.course, self.assignment))
         result = marmoset.submit(self.course, self.assignment, self.files)
         if result:
-            print("Success!\n")
+            print("Success!")
         else:
-            print("Submission failed (check login credentials)\n")
+            print("Submission failed (check login credentials)")
 
     def async_submit(self, username, password):
         """
@@ -165,7 +171,35 @@ def get_file_paths(file_extension):
     :rtype: list
     """
     cwd = os.getcwd()
-    return glob.glob(cwd + '/*' + file_extension)
+    return glob.glob(os.path.join(cwd, '*' + file_extension))
+
+
+def get_file_paths_recursive(file_extension, path='.', depth=0):
+    """
+    Get all the files of the specified type from the cwd recursively
+    up to three levels of nesting.
+
+    :param file_extension: The file type to search for
+    :type file_extension: str
+
+    :return: A list of file paths
+    :rtype: list
+    """
+    file_paths = []
+    for (dirpath, dirnames, filenames) in os.walk(path):
+        if depth <= MAX_DEPTH:
+            for subdir in dirnames:
+                file_paths.extend(
+                    get_file_paths_recursive(file_extension,
+                                             os.path.join(dirpath, subdir),
+                                             depth + 1)
+                )
+        for filename in filenames:
+            if filename.endswith(file_extension) and not os.path.islink(filename):
+                file_paths.append(os.path.join(dirpath, filename))
+        break
+
+    return file_paths
 
 
 def get_all_params(file_list):
@@ -185,7 +219,7 @@ def get_all_params(file_list):
     for entry in valid_files:
         course = entry[1][0]
         assignment = entry[1][1]
-        filename = os.path.basename(entry[0])  # FIXME: Zip behaviour is weird
+        filename = entry[0]  # FIXME: Zip behaviour is wonky for absolute paths
         key = (course, assignment)  # 'course' + 'assignment'
         if key in marmo_problems:
             # add filename to existing MarmosetAssignment
@@ -204,6 +238,7 @@ def submit_all(assignments, username, password):
 
 files = []
 for file_exts in langLookup:
-    files += get_file_paths(file_exts)
+    files += get_file_paths_recursive(file_exts)
 
-submit_all(get_all_params(files), username, password)
+submit_all(get_all_params(files), m_username, m_password)
+
